@@ -4,11 +4,17 @@ from google import genai
 import base64
 import io
 from PIL import Image
+import os
+from dotenv import load_dotenv
+
+# Φόρτωση των μεταβλητών περιβάλλοντος από το αρχείο .env
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app) # Επιτρέπει τις κλήσεις από το κινητό
 
-# Χρησιμοποίησε το API Key σου
+# Αρχικοποίηση του Client.
+# Εφόσον φορτώσαμε το .env, το SDK διαβάζει ΑΥΤΟΜΑΤΑ τη μεταβλητή GEMINI_API_KEY.
 client = genai.Client()
 
 @app.route('/scan', methods=['POST'])
@@ -21,8 +27,7 @@ def scan_object():
         if not image_base64:
             return jsonify({"error": "No image provided"}), 400
 
-        # Προετοιμασία της εικόνας για το Gemini
-        # Το νέο SDK δέχεται απευθείας το base64 string αν το δομήσουμε σωστά
+        # Προετοιμασία της εικόνας και του prompt για το Gemini
         prompt = (f"Αναγνώρισε το αντικείμενο στη φωτογραφία. "
                   f"Επίστρεψε ΑΠΟΚΛΕΙΣΤΙΚΑ ένα JSON με τα εξής πεδία: "
                   f"'objectGr': το όνομα στα ελληνικά, "
@@ -30,7 +35,7 @@ def scan_object():
                   f"Μην γράψεις τίποτα άλλο εκτός από το JSON.")
 
         response = client.models.generate_content(
-            model="gemini-flash-latest",
+            model="gemini-2.5-flash",
             config={"response_mime_type": "application/json"},
             contents=[
                 prompt,
